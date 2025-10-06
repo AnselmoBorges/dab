@@ -58,7 +58,3 @@ jobs:
         run: |
           cd dab_treinamento
           databricks bundle run dab_treinamento_job --target dev
-          DATABRICKS_CONFIG_PROFILE: DEV
-        run: |
-          cd dab_treinamento
-          databricks bundle run dab_treinamento_job --target dev

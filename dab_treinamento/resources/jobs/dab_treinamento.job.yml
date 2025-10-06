@@ -1,8 +1,8 @@
 # Job do treinamento para executar o notebook demo.
 resources:
   jobs:
-    blip_dab_treinamento_job:
-      name: blip_dab_treinamento_job
+    dab_treinamento_job:
+      name: dab_treinamento_job
       tags:
         treinamento: dab
         ambiente: dev
@@ -23,7 +23,8 @@ resources:
         quartz_cron_expression: "0 0 8 ? * TUE *"
         timezone_id: America/Sao_Paulo
       tasks:
-        - task_key: ingest_demo
+        - task_key: ingestao_usuarios
+          description: Ingestão de usuários de exemplo via notebook.
           notebook_task:
             notebook_path: ../../src/notebooks/demo_notebook.py
             base_parameters:
