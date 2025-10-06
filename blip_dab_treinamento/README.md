@@ -1,3 +1,42 @@
+## Fluxo de desenvolvimento e deploy (Git)
+
+O ciclo de desenvolvimento do bundle segue o padrão corporativo para ambientes DEV e PRD:
+
+1. **Criação de feature branch**
+   - Crie uma branch para cada nova feature ou ajuste: `feature/dev_001`, `feature/dev_002`, etc.
+   - Exemplo:
+     ```bash
+     git checkout -b feature/dev_001
+     ```
+2. **Desenvolvimento e testes locais**
+   - Faça os ajustes necessários no código/notebooks/jobs.
+   - Valide a configuração do job com os testes:
+     ```bash
+     export DATABRICKS_CONFIG_PROFILE=DEV
+     uv run pytest -s
+     ```
+   - Realize o deploy e rode o job em DEV:
+     ```bash
+     databricks bundle deploy --target dev
+     databricks bundle run blip_dab_treinamento_job --target dev
+     ```
+3. **Merge para branch dev**
+   - Após validação, abra um pull request para a branch `dev`.
+   - Realize revisão de código e testes integrados.
+4. **Promoção para produção (main)**
+   - Após aprovação, faça merge da branch `dev` para `main`.
+   - O deploy em PRD é feito a partir da branch `main`:
+     ```bash
+     databricks bundle deploy --target prd
+     databricks bundle run blip_dab_treinamento_job --target prd
+     ```
+
+**Resumo do fluxo:**
+
+`feature/dev_001` → `dev` → `main` (PRD)
+
+Esse fluxo garante rastreabilidade, testes em ambiente seguro e governança no deploy para produção.
+
 ## Como validar a configuração do job (testes)
 
 Antes de realizar o deploy ou rodar jobs, recomenda-se validar a configuração do job YAML via testes automatizados:
