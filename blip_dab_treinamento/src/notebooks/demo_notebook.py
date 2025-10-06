@@ -15,16 +15,16 @@ print(f"Inserting user_id={user_id}, user_name={user_name}")
 # COMMAND ----------
 # DBTITLE 1,Cria tabela e insere dados de exemplo + parâmetro
 spark.sql(
-    f"CREATE TABLE IF NOT EXISTS {catalog_name}.dab_b.users (id INT, name STRING)"
+    f"CREATE TABLE IF NOT EXISTS {catalog_name}.rescue_b.users (id INT, name STRING)"
 )
 spark.sql(
-    f"INSERT OVERWRITE {catalog_name}.dab_b.users VALUES (1, 'Alice'), (2, 'Bob')"
+    f"INSERT OVERWRITE {catalog_name}.rescue_b.users VALUES (1, 'Alice'), (2, 'Bob')"
 )
 spark.sql(
-    f"INSERT INTO {catalog_name}.dab_b.users VALUES ({user_id}, '{user_name}')"
+    f"INSERT INTO {catalog_name}.rescue_b.users VALUES ({user_id}, '{user_name}')"
 )
 
 # COMMAND ----------
 # DBTITLE 1,Lê os dados inseridos
-result_df = spark.sql(f"SELECT * FROM {catalog_name}.dab_b.users ORDER BY id")
+result_df = spark.sql(f"SELECT * FROM {catalog_name}.rescue_b.users ORDER BY id")
 display(result_df)

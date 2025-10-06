@@ -14,10 +14,11 @@ include:
   - resources/pipelines/*.yml
   - resources/schemas/*.yml
 
+
 variables:
   catalog_name:
-    description: Nome do catálogo Unity Catalog (treinamento DAB)
-    default: dab_dev
+    description: Nome do catálogo Unity Catalog (DEV/PRD)
+    default: rescue_dev
   performance_target:
     description: Define o perfil de performance/custo do job (STANDARD ou PERFORMANCE_OPTIMIZED)
     default: STANDARD
@@ -26,11 +27,11 @@ targets:
     mode: development
     default: true
     workspace:
-      host: https://adb-8750643486693976.16.azuredatabricks.net
+      host: https://adb-1293581597272291.11.azuredatabricks.net
 
-  prod:
+  prd:
     workspace:
-      host: https://adb-6899954377912468.8.azuredatabricks.net
+      host: https://adb-2533506717590470.10.azuredatabricks.net
     variables:
-      catalog_name: dab_prd
+      catalog_name: rescue_prd
       performance_target: PERFORMANCE_OPTIMIZED

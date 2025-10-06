@@ -6,7 +6,7 @@ resources:
       tags:
         treinamento: dab
         ambiente: dev
-        area: D4B
+        area: engenharia
       description: Job de treinamento que ingere usuários de exemplo com parâmetros dinâmicos.
       parameters:
         - name: catalog_name
@@ -17,7 +17,7 @@ resources:
           default: "Anselmo"
       email_notifications:
         on_failure:
-          - anselmo.junior@blip.ai
+          - anselmoborges@gmail.com
       timeout_seconds: 900
       schedule:
         quartz_cron_expression: "0 0 8 ? * TUE *"
