@@ -34,6 +34,10 @@ jobs:
           echo "client_secret = $DATABRICKS_CLIENT_SECRET" >> ~/.databrickscfg
 
       - name: Rodar testes automatizados com uv/pytest
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST_DEV }}
+          DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID_DEV }}
+          DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET_DEV }}
         run: |
           cd dab_treinamento
           uv run pytest -s
