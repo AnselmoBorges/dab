@@ -21,29 +21,18 @@ jobs:
         run: |
           curl -Ls https://astral.sh/uv/install.sh | bash
 
-<<<<<<< HEAD
 
       - name: Configurar credenciais Databricks (OAuth Service Principal)
         env:
           DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST_PRD }}
           DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID_PRD }}
           DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET_PRD }}
-=======
-      - name: Configurar credenciais Databricks
-        env:
-          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST_PRD }}
-          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN_PRD }}
->>>>>>> dev
         run: |
           mkdir -p ~/.databricks
           echo "[PRD]" > ~/.databrickscfg
           echo "host = $DATABRICKS_HOST" >> ~/.databrickscfg
-<<<<<<< HEAD
           echo "client_id = $DATABRICKS_CLIENT_ID" >> ~/.databrickscfg
           echo "client_secret = $DATABRICKS_CLIENT_SECRET" >> ~/.databrickscfg
-=======
-          echo "token = $DATABRICKS_TOKEN" >> ~/.databrickscfg
->>>>>>> dev
 
       - name: Deploy bundle em PRD
         env:
