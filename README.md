@@ -1,3 +1,225 @@
+# Arquitetura e Automação de Governança Databricks & Azure SQL (DEV/PRD)
+
+## Contexto Geral
+Este projeto implementa uma arquitetura de dados moderna e governada para ambientes de desenvolvimento (DEV) e produção (PRD) na Azure, integrando Databricks, Unity Catalog, Azure SQL Database e Blob Storage. Todo o provisionamento, automação e ingestão de dados são realizados via CLI e scripts Python, garantindo rastreabilidade, segurança e escalabilidade.
+
+### Ferramentas e Serviços Utilizados
+- **Azure Resource Groups**: Separação lógica dos recursos DEV e PRD.
+- **Azure Storage Account**: Armazenamento de dados brutos, intermediários e finais (staging, bronze, silver, gold).
+- **Blob Storage**: Repositório dos arquivos CSV para ingestão.
+- **Azure Databricks**: Plataforma de processamento e governança de dados, com Unity Catalog para controle de acesso e external locations.
+- **Unity Catalog**: Governança centralizada dos dados, catálogos, schemas e volumes.
+- **Azure SQL Database**: Banco relacional para consultas, BI e integração, com automação de carga via Python.
+- **Azure CLI & Databricks CLI**: Provisionamento, configuração e governança dos recursos.
+- **Python (pandas, sqlalchemy, pyodbc)**: Automação da ingestão dos dados do Blob Storage para o SQL.
+
+### Desenho Organizacional (ASCII)
+
+```
+┌─────────────┐      ┌─────────────┐      ┌─────────────┐
+│   DEV      │      │   PRD       │      │   Blob      │
+│ Resource   │      │ Resource    │      │  Storage    │
+│ Group      │      │ Group       │      │ (staging/   │
+│ (rg_rescue │      │ (rg_rescue  │      │  olist/*.csv│
+│ _dev)      │      │ _prd)       │      └─────────────┘
+└─────┬──────┘      └─────┬───────┘
+	│                   │
+	│                   │
+┌─────▼──────┐      ┌─────▼───────┐
+│ Databricks │      │ Databricks  │
+│ Workspace  │      │ Workspace   │
+│ (DEV)      │      │ (PRD)       │
+└─────┬──────┘      └─────┬───────┘
+	│                   │
+	│                   │
+┌─────▼──────┐      ┌─────▼───────┐
+│ Unity      │      │ Unity       │
+│ Catalog    │      │ Catalog     │
+│ rescue_dev │      │ rescue_prd  │
+└─────┬──────┘      └─────┬───────┘
+	│                   │
+	│                   │
+┌─────▼──────┐      ┌─────▼───────┐
+│ Azure SQL  │      │ Azure SQL   │
+│ sqlrescuedev│     │ sqlrescueprd│
+│ (rescue)   │      │ (rescue)    │
+└────────────┘      └─────────────┘
+```
+
+## Fluxo de Automação e Governança
+
+1. **Provisionamento dos recursos Azure**: Resource Groups, Storage Accounts, Containers, Access Connector.
+2. **Permissões e credenciais**: Access Connector único para DEV/PRD, permissões via principalId, SAS key para Blob Storage.
+3. **Governança Databricks/Unity Catalog**: External locations, catálogos, schemas, volumes, isolamento de catálogo PRD.
+4. **Ingestão de dados**: Upload dos CSVs no Blob Storage, automação da carga para Azure SQL via Python.
+5. **Segurança e acesso**: Regras de firewall para IPs e recursos Azure, credenciais protegidas.
+6. **Documentação e rastreabilidade**: README.md atualizado, scripts versionados, comandos CLI e Python documentados.
+
+## Comandos e Scripts Utilizados
+
+- Azure CLI: Provisionamento, permissões, firewall
+- Databricks CLI: Governança, external locations, schemas, volumes
+- Python: Automação da carga dos CSVs para SQL
+
+### Exemplos de comandos e scripts estão detalhados nas seções abaixo.
+
+# 8.2. Alternativa: Ingestão dos CSVs via BULK INSERT
+
+Como o Azure SQL Database não suporta tabelas externas com BLOB_STORAGE, utilize o comando BULK INSERT para importar os arquivos CSV diretamente do Blob Storage usando SAS.
+
+Exemplo para importar customers.csv:
+
+```sql
+BULK INSERT olist.customers
+FROM 'https://sarescuedev.blob.core.windows.net/staging/olist/customers.csv'
+WITH (
+		DATA_SOURCE = 'olist_blob',
+		FORMAT = 'CSV',
+		FIRSTROW = 2,
+		FIELDTERMINATOR = ',',
+		ROWTERMINATOR = '\n',
+		TABLOCK
+);
+```
+
+**Passos:**
+1. Crie a tabela destino (exemplo para customers):
+	 ```sql
+	 CREATE TABLE olist.customers (
+		 customer_id NVARCHAR(50),
+		 customer_unique_id NVARCHAR(50),
+		 customer_zip_code_prefix NVARCHAR(10),
+		 customer_city NVARCHAR(50),
+		 customer_state NVARCHAR(2)
+	 );
+	 ```
+2. Execute o BULK INSERT para cada arquivo CSV, ajustando o nome da tabela e o layout conforme necessário.
+
+> Repita para todos os arquivos da pasta olist.
+# 8.1. Comandos executados no Azure SQL DEV
+
+```sql
+-- Criar schema
+CREATE SCHEMA olist;
+
+-- Criar master key
+CREATE MASTER KEY ENCRYPTION BY PASSWORD = '1qaz@WSX3edc';
+
+-- Criar credential com SAS
+CREATE DATABASE SCOPED CREDENTIAL olist_sas
+	WITH IDENTITY = 'SHARED ACCESS SIGNATURE',
+			 SECRET = 'sp=racwdlme&st=2025-10-05T00:19:24Z&se=2025-10-05T08:34:24Z&spr=https&sv=2024-11-04&sr=c&sig=yYlrbME%2F6%2BIpqgD2FRYLbqAh4NLypApbML3TK3OlPRc%3D';
+
+-- Criar external data source
+CREATE EXTERNAL DATA SOURCE olist_blob
+	WITH (
+		TYPE = BLOB_STORAGE,
+		LOCATION = 'https://sarescuedev.blob.core.windows.net/staging/olist',
+		CREDENTIAL = olist_sas
+	);
+
+-- Criar formato de arquivo externo para CSV (delimitador de string escapado)
+CREATE EXTERNAL FILE FORMAT olist_csv_format
+	WITH (
+		FORMAT_TYPE = DELIMITEDTEXT,
+		FORMAT_OPTIONS (FIELD_TERMINATOR = ',', STRING_DELIMITER = '""', FIRST_ROW = 2)
+	);
+```
+# 8. Ingestão de CSVs do Azure Blob Storage para Azure SQL
+
+No container `staging` do storage `sarescuedev`, foi criada a pasta `olist` com arquivos CSV. Vamos criar um schema `olist` e importar esses dados para tabelas nos dois Azure SQL (DEV e PRD) usando external data source e SAS key.
+
+## SAS Key para acesso
+```
+sp=racwdlme&st=2025-10-05T00:19:24Z&se=2025-10-05T08:34:24Z&spr=https&sv=2024-11-04&sr=c&sig=yYlrbME%2F6%2BIpqgD2FRYLbqAh4NLypApbML3TK3OlPRc%3D
+```
+
+## Passos para DEV e PRD
+
+1. Criar o schema `olist`:
+	```sql
+	CREATE SCHEMA olist;
+	```
+
+2. Criar a credential para acesso ao Blob Storage via SAS:
+	```sql
+	CREATE DATABASE SCOPED CREDENTIAL olist_sas
+	WITH IDENTITY = 'SHARED ACCESS SIGNATURE',
+		  SECRET = 'sp=racwdlme&st=2025-10-05T00:19:24Z&se=2025-10-05T08:34:24Z&spr=https&sv=2024-11-04&sr=c&sig=yYlrbME%2F6%2BIpqgD2FRYLbqAh4NLypApbML3TK3OlPRc%3D';
+	```
+
+3. Criar o external data source apontando para a pasta olist:
+	```sql
+	CREATE EXTERNAL DATA SOURCE olist_blob
+	WITH (
+	  TYPE = BLOB_STORAGE,
+	  LOCATION = 'https://sarescuedev.blob.core.windows.net/staging/olist',
+	  CREDENTIAL = olist_sas
+	);
+	```
+
+4. Criar as tabelas externas para cada CSV (exemplo para customers.csv):
+	```sql
+	CREATE EXTERNAL TABLE olist.customers (
+	  -- Defina os tipos de dados conforme o layout do CSV
+	  customer_id NVARCHAR(50),
+	  customer_unique_id NVARCHAR(50),
+	  customer_zip_code_prefix NVARCHAR(10),
+	  customer_city NVARCHAR(50),
+	  customer_state NVARCHAR(2)
+	)
+	WITH (
+	  LOCATION = 'customers.csv',
+	  DATA_SOURCE = olist_blob,
+	  FILE_FORMAT = olist_csv_format
+	);
+	```
+
+5. Criar o formato de arquivo externo para CSV:
+	```sql
+	CREATE EXTERNAL FILE FORMAT olist_csv_format
+	WITH (
+	  FORMAT_TYPE = DELIMITEDTEXT,
+	  FORMAT_OPTIONS (FIELD_TERMINATOR = ',', STRING_DELIMITER = '"', FIRST_ROW = 2)
+	);
+	```
+
+> Repita o passo 4 para cada arquivo CSV da pasta olist.
+
+## Observações
+- Execute todos os comandos acima tanto no SQL DEV quanto no PRD.
+- Ajuste os tipos de dados conforme o layout de cada CSV.
+- O SAS key tem validade até 05/10/2025 08:34 UTC.
+# 7. Provisionamento de Azure SQL (DEV e PRD)
+
+Provisionamos dois servidores Azure SQL gratuitos (tier Basic, até 2GB) para DEV e PRD, cada um com um banco chamado `rescue`.
+
+**Credenciais padrão:**
+- Usuário: engenharia
+- Senha: 1qaz@WSX3edc
+
+## DEV
+```bash
+az sql server create --name sqlrescuedev --resource-group rg_rescue_dev --location brazilsouth --admin-user engenharia --admin-password 1qaz@WSX3edc --enable-public-network true
+az sql db create --resource-group rg_rescue_dev --server sqlrescuedev --name rescue --edition Basic
+```
+
+## PRD
+```bash
+az sql server create --name sqlrescueprd --resource-group rg_rescue_prd --location brazilsouth --admin-user engenharia --admin-password 1qaz@WSX3edc --enable-public-network true
+az sql db create --resource-group rg_rescue_prd --server sqlrescueprd --name rescue --edition Basic
+```
+
+> Observação: O tier Basic permite até 2GB por banco, ideal para uso gratuito e testes. Caso precise de mais espaço, utilize o tier Standard ou superior.
+## 6. Restringindo catálogo rescue_prd para workspace de produção
+
+Para garantir que o catálogo de produção (`rescue_prd`) só apareça no workspace de PRD, utilize o comando de assignment para vincular o catálogo apenas ao workspace de produção:
+
+```bash
+databricks catalogs update rescue_prd --assignments 2533506717590470 --profile PRD
+```
+
+Assim, apenas o workspace de produção terá acesso ao catálogo rescue_prd, reforçando a governança e o isolamento entre ambientes.
 # Guia Completo de Governança e Automação Databricks (DEV e PRD)
 
 Este guia apresenta o passo a passo para provisionar, configurar e governar ambientes Databricks DEV e PRD na Azure, utilizando automação via CLI e Unity Catalog.
