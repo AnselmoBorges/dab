@@ -1,13 +1,13 @@
-name: Deploy Databricks Bundle PRD
+name: Deploy Databricks Bundle DEV
 
 on:
-  workflow_dispatch:
   push:
     branches:
-      - main
+      - dev
+  workflow_dispatch:
 
 jobs:
-  deploy-prd:
+  deploy-dev:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout código
@@ -23,33 +23,42 @@ jobs:
 
       - name: Configurar credenciais Databricks (OAuth Service Principal)
         env:
-          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST_PRD }}
-          DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID_PRD }}
-          DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET_PRD }}
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST_DEV }}
+          DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID_DEV }}
+          DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET_DEV }}
         run: |
           mkdir -p ~/.databricks
-          echo "[PRD]" > ~/.databrickscfg
+          echo "[DEV]" > ~/.databrickscfg
           echo "host = $DATABRICKS_HOST" >> ~/.databrickscfg
           echo "client_id = $DATABRICKS_CLIENT_ID" >> ~/.databrickscfg
           echo "client_secret = $DATABRICKS_CLIENT_SECRET" >> ~/.databrickscfg
 
-      - name: Validar bundle Databricks
+      - name: Rodar testes automatizados com uv/pytest
         env:
-          DATABRICKS_CONFIG_PROFILE: PRD
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST_DEV }}
+          DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID_DEV }}
+          DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET_DEV }}
         run: |
           cd dab_treinamento
-          databricks bundle validate --target prd
+          uv run pytest -s
+
+      - name: Validar bundle Databricks
+        env:
+          DATABRICKS_CONFIG_PROFILE: DEV
+        run: |
+          cd dab_treinamento
+          databricks bundle validate --target dev
 
       - name: Deploy bundle Databricks
         env:
-          DATABRICKS_CONFIG_PROFILE: PRD
+          DATABRICKS_CONFIG_PROFILE: DEV
         run: |
           cd dab_treinamento
-          databricks bundle deploy --target prd
+          databricks bundle deploy --target dev
 
       - name: Executar job Databricks
         env:
-          DATABRICKS_CONFIG_PROFILE: PRD
+          DATABRICKS_CONFIG_PROFILE: DEV
         run: |
           cd dab_treinamento
-          databricks bundle run dab_treinamento_job --target prd
+          databricks bundle run dab_treinamento_job --target dev

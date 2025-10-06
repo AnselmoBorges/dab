@@ -3,12 +3,12 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
-JOB_FILE = ROOT / "resources" / "jobs" / "blip_dab_treinamento.job.yml"
+JOB_FILE = ROOT / "resources" / "jobs" / "dab_treinamento.job.yml"
 
 
 def _load_job():
     data = yaml.safe_load(JOB_FILE.read_text())
-    job = data["resources"]["jobs"]["blip_dab_treinamento_job"]
+    job = data["resources"]["jobs"]["dab_treinamento_job"]
     return job
 
 

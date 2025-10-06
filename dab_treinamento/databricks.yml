@@ -1,7 +1,7 @@
-# This is a Databricks asset bundle definition for blip_dab_treinamento.
+# This is a Databricks asset bundle definition for dab_treinamento.
 # See https://docs.databricks.com/dev-tools/bundles/index.html for documentation.
 bundle:
-  name: blip_dab_treinamento
+  name: dab_treinamento
   uuid: 9d618306-5045-4721-8256-332ee1c47156
 
 artifacts:
