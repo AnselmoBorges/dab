@@ -1,0 +1,65 @@
+name: Deploy Databricks Bundle DEV
+
+on:
+  push:
+    branches:
+      - dev
+  workflow_dispatch:
+
+jobs:
+  deploy-dev:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Instalar Databricks CLI
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | bash
+
+      - name: Instalar uv
+        run: |
+          curl -Ls https://astral.sh/uv/install.sh | bash
+
+      - name: Configurar credenciais Databricks (OAuth Service Principal)
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST_DEV }}
+          DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID_DEV }}
+          DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET_DEV }}
+        run: |
+          mkdir -p ~/.databricks
+          echo "[DEV]" > ~/.databrickscfg
+          echo "host = $DATABRICKS_HOST" >> ~/.databrickscfg
+          echo "client_id = $DATABRICKS_CLIENT_ID" >> ~/.databrickscfg
+          echo "client_secret = $DATABRICKS_CLIENT_SECRET" >> ~/.databrickscfg
+
+      - name: Deploy bundle em DEV
+        env:
+          DATABRICKS_CONFIG_PROFILE: DEV
+        run: |
+          cd dab_treinamento
+      - name: Rodar testes automatizados com uv/pytest
+        run: |
+          cd dab_treinamento
+          uv run pytest -s
+
+          databricks bundle validate --target dev
+          databricks bundle deploy --target dev
+          databricks bundle run dab_treinamento_job --target dev
+
+      - name: Rodar testes automatizados com uv/pytest
+          databricks bundle validate --target dev
+
+      - name: Deploy bundle Databricks
+        env:
+          DATABRICKS_CONFIG_PROFILE: DEV
+        run: |
+          cd dab_treinamento
+          databricks bundle deploy --target dev
+
+      - name: Executar job Databricks
+        env:
+          DATABRICKS_CONFIG_PROFILE: DEV
+        run: |
+          cd dab_treinamento
+          databricks bundle run dab_treinamento_job --target dev
