@@ -1,4 +1,4 @@
-from blip_dab_treinamento import main
+from dab_treinamento import main
 
 
 def test_find_all_taxis():
