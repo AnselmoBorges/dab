@@ -1,0 +1,13 @@
+resources:
+  jobs:
+    notebook_job_example:
+      name: notebook_job_example
+      tasks:
+        - task_key: ingest_users
+          notebook_task:
+            notebook_path: ../../examples/python-notebook/src/notebooks/users_ingest.py
+            base_parameters:
+              catalog_name: ${var.catalog_name}
+      queue:
+        enabled: true
+      performance_target: PERFORMANCE_OPTIMIZED

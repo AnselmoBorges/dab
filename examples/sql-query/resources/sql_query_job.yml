@@ -1,0 +1,16 @@
+resources:
+  jobs:
+    sql_query_job_example:
+      name: sql_query_job_example
+      tasks:
+        - task_key: refresh_users
+          sql_task:
+            query:
+              file_path: ../../examples/sql-query/sql/refresh_users.sql
+            warehouse_id: ${var.sql_warehouse_id}
+            parameters:
+              - name: catalog_name
+                value: ${var.catalog_name}
+      queue:
+        enabled: true
+      performance_target: PERFORMANCE_OPTIMIZED

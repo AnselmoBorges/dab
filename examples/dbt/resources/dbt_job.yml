@@ -1,0 +1,15 @@
+resources:
+  jobs:
+    dbt_job_example:
+      name: dbt_job_example
+      tasks:
+        - task_key: run_dbt
+          dbt_task:
+            project_directory: ../../examples/dbt
+            commands:
+              - dbt deps
+              - dbt run
+            warehouse_id: ${var.sql_warehouse_id}
+      queue:
+        enabled: true
+      performance_target: PERFORMANCE_OPTIMIZED

@@ -1,0 +1,15 @@
+resources:
+  pipelines:
+    users_dlt_pipeline:
+      name: users_dlt_pipeline
+      catalog: ${var.catalog_name}
+      target: dab_g
+      channel: CURRENT
+      development: true
+      libraries:
+        - notebook:
+            path: ../../examples/dlt/src/pipelines/users_dlt.py
+      configuration:
+        catalog_name: ${var.catalog_name}
+      photon: true
+      continuous: false

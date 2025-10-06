@@ -1,0 +1,9 @@
+name: dab_training_dbt
+version: '1.0'
+profile: default
+model-paths: ["src/models"]
+
+models:
+  dab_training_dbt:
+    +materialized: table
+    +schema: dab_s

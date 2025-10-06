@@ -1,0 +1,55 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pr:
+  branches:
+    include:
+      - main
+
+variables:
+  - name: pythonVersion
+    value: '3.12'
+  - name: skipDecorator
+    value: 'true'
+  - name: skipSonarBranch
+    value: 'true'
+
+stages:
+  - stage: DeployProd
+    displayName: Deploy to Prod
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: DeployBundle
+        displayName: Deploy Databricks bundle
+        environment: prod
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - task: UsePythonVersion@0
+                  displayName: Set up Python
+                  inputs:
+                    versionSpec: $(pythonVersion)
+                    architecture: 'x64'
+                - script: |
+                    set -euo pipefail
+                    python -m pip install --upgrade pip
+                    python -m pip install uv
+                  displayName: Install tooling
+                - script: |
+                    set -euo pipefail
+                    curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+                    export PATH="$HOME/.databricks/bin:$PATH"
+                    databricks --version
+                    cd blip_dab_treinamento
+                    databricks bundle validate --target prod
+                    databricks bundle deploy --target prod
+                    databricks bundle run blip_dab_treinamento_job --target prod
+                  env:
+                    DATABRICKS_HOST: $(DATABRICKS_HOST_PROD)
+                    DATABRICKS_CLIENT_ID: $(DATABRICKS_CLIENT_ID)
+                    DATABRICKS_CLIENT_SECRET: $(DATABRICKS_CLIENT_SECRET)
+                  displayName: Deploy and run job in prod

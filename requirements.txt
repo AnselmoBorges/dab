@@ -1,0 +1,2 @@
+databricks-cli>=0.218.0
+uv>=0.2.0

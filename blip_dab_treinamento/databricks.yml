@@ -1,0 +1,36 @@
+# This is a Databricks asset bundle definition for blip_dab_treinamento.
+# See https://docs.databricks.com/dev-tools/bundles/index.html for documentation.
+bundle:
+  name: blip_dab_treinamento
+  uuid: 9d618306-5045-4721-8256-332ee1c47156
+
+artifacts:
+  python_artifact:
+    type: whl
+    build: uv build --wheel
+
+include:
+  - resources/jobs/*.yml
+  - resources/pipelines/*.yml
+  - resources/schemas/*.yml
+
+variables:
+  catalog_name:
+    description: Nome do catálogo Unity Catalog (treinamento DAB)
+    default: dab_dev
+  performance_target:
+    description: Define o perfil de performance/custo do job (STANDARD ou PERFORMANCE_OPTIMIZED)
+    default: STANDARD
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://adb-8750643486693976.16.azuredatabricks.net
+
+  prod:
+    workspace:
+      host: https://adb-6899954377912468.8.azuredatabricks.net
+    variables:
+      catalog_name: dab_prd
+      performance_target: PERFORMANCE_OPTIMIZED

@@ -1,0 +1,10 @@
+default:
+  outputs:
+    dev:
+      type: databricks
+      catalog: ${env:DBT_CATALOG:-dab_dev}
+      schema: dab_s
+      host: ${env:DBT_HOST}
+      http_path: ${env:DBT_WAREHOUSE_HTTP_PATH}
+      token: ${env:DBT_TOKEN}
+  target: dev

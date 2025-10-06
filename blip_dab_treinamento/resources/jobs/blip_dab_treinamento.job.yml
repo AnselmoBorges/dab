@@ -1,0 +1,35 @@
+# Job do treinamento para executar o notebook demo.
+resources:
+  jobs:
+    blip_dab_treinamento_job:
+      name: blip_dab_treinamento_job
+      tags:
+        treinamento: dab
+        ambiente: dev
+        area: D4B
+      description: Job de treinamento que ingere usuários de exemplo com parâmetros dinâmicos.
+      parameters:
+        - name: catalog_name
+          default: ${var.catalog_name}
+        - name: user_id
+          default: "3"
+        - name: user_name
+          default: "Anselmo"
+      email_notifications:
+        on_failure:
+          - anselmo.junior@blip.ai
+      timeout_seconds: 900
+      schedule:
+        quartz_cron_expression: "0 0 8 ? * TUE *"
+        timezone_id: America/Sao_Paulo
+      tasks:
+        - task_key: ingest_demo
+          notebook_task:
+            notebook_path: ../../src/notebooks/demo_notebook.py
+            base_parameters:
+              catalog_name: "{{job.parameters.catalog_name}}"
+              user_id: "{{job.parameters.user_id}}"
+              user_name: "{{job.parameters.user_name}}"
+      queue:
+        enabled: true
+      performance_target: ${var.performance_target}
