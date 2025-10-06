@@ -1,3 +1,21 @@
+## Configuração dos secrets para deploy automatizado em PRD (GitHub Actions)
+
+Para que o workflow de deploy em produção funcione corretamente, é necessário configurar dois secrets no GitHub do repositório:
+
+1. **DATABRICKS_HOST_PRD**
+  - Valor: URL do workspace Databricks PRD (exemplo: `https://adb-2533506717590470.10.azuredatabricks.net`)
+2. **DATABRICKS_TOKEN_PRD**
+  - Valor: Token OAuth gerado para o service principal gerenciado (exemplo: `srv_eng_prd`).
+  - Para gerar o token:
+    - Acesse o portal Databricks > Settings > Identity and access > Service principals > selecione o service principal > aba Secrets > clique em "Generate secret".
+    - Copie o valor gerado e salve como secret no GitHub.
+
+Como criar os secrets no GitHub:
+1. Acesse o repositório > Settings > Secrets and variables > Actions.
+2. Clique em "New repository secret" e cadastre os nomes e valores conforme acima.
+
+Com esses secrets configurados, o workflow `.github/workflows/deploy_prd.yml` conseguirá autenticar e rodar o deploy do bundle em PRD automaticamente, usando o service principal gerenciado.
+
 ## Fluxo de desenvolvimento e deploy (Git)
 
 O ciclo de desenvolvimento do bundle segue o padrão corporativo para ambientes DEV e PRD:
