@@ -718,3 +718,4 @@ O primeiro vídeo da série abordará como configurar o Visual Studio Code para 
 - Databricks CLI
 
 Este vídeo fornecerá um guia passo a passo para preparar seu ambiente de desenvolvimento local.
+- alteracao video
