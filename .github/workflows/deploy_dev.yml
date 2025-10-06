@@ -58,16 +58,6 @@ jobs:
         run: |
           cd dab_treinamento
           databricks bundle run dab_treinamento_job --target dev
-
-      - name: Deploy bundle Databricks
-        env:
-          DATABRICKS_CONFIG_PROFILE: DEV
-        run: |
-          cd dab_treinamento
-          databricks bundle deploy --target dev
-
-      - name: Executar job Databricks
-        env:
           DATABRICKS_CONFIG_PROFILE: DEV
         run: |
           cd dab_treinamento
